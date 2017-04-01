@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <script>
+     var DEBUG = {{ debug }};
+   </script>
+   <script src="/static/control.js" type="text/javascript"></script>
+   <script src="/static/websocket.js" type="text/javascript"></script>
+   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+ </head>
+ <body onload="WebSocket_Open()">
+   <br/> <b>WebSocket Status:</b> <span id="connectionStatus">closed</span><br />
+   <div id="lstat" style="background-color:#000; width: 600px;">Aktueller Status:</div><br />
+   <canvas width="600" height="440" id="canvas_picker"></canvas>
+   <script type="text/javascript">
+	var canvas = document.getElementById('canvas_picker').getContext('2d');
+
+	// create an image object and get it’s source
+	var img = new Image();
+	img.src = '/static/image.jpg';
+
+	// copy the image to the canvas
+	$(img).load(function(){
+	  canvas.drawImage(img,0,0);
+	});
+
+	// http://www.javascripter.net/faq/rgbtohex.htm
+	function rgbToHex(R,G,B) {return toHex(R)+toHex(G)+toHex(B)}
+	function toHex(n) {
+	  n = parseInt(n,10);
+	  if (isNaN(n)) return "00";
+	  n = Math.max(0,Math.min(n,255));
+	  return "0123456789ABCDEF".charAt((n-n%16)/16)  + "0123456789ABCDEF".charAt(n%16);
+	}
+	$('#canvas_picker').click(function(event){
+	  // getting user coordinates
+	  var x = event.pageX - this.offsetLeft;
+	  var y = event.pageY - this.offsetTop;
+	  // getting image data and RGB values
+	  var img_data = canvas.getImageData(x, y, 1, 1).data;
+	  var R = img_data[0];
+	  var G = img_data[1];
+	  var B = img_data[2];
+	  WebSocket_Send('farbe:'+R+':'+G+':'+B);
+	});
+   </script><br />
+   <select id="Effekte" style="height: 50px; width: 600px" onchange="WebSocket_Send('effekt:'+this.value)">
+    <option value="dummy"></option>
+    <option value="kino">Theaterchase</option>
+	<option value="regenbogen">Regenbogen</option>
+	<option value="regenbogenroto">Regenbogenrotation</option>
+	<option value="kinoregenbogen">Kinoregenbogen</option>
+   </select>
+   <br/><input type="button" value="Beleuchtung an" style="height: 50px; width: 290px; align:center;" onClick="WebSocket_Send('haupt:an')" />
+   <input type="button" value="Beleuchtung aus" style="height: 50px; width: 290px; align:center;" onClick="WebSocket_Send('haupt:aus')" />
+   <p><div id="Log" style="text-align:left; width:100%;">&nbsp;</div></p>
+ </body>
+</html>
